@@ -1,16 +1,20 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const Campsite = require('../models/campsite');
+const express = require('express');  //Using express middleware
+const bodyParser = require('body-parser'); //Body-parser middleware
 
-const campsiteRouter = express.Router();
+//Go down one directory and go to modelsdirectory and grab dishes.js
+const Campsite = require('../models/campsite'); 
 
-campsiteRouter.use(bodyParser.json());
+const campsiteRouter = express.Router(); //Router object for express to make routes
+
+campsiteRouter.use(bodyParser.json()); //Parsing out JSON object
 
 //enpoints for all campsites
+//HTTP Headers, telling the browser client what data to expect.
+//They define the operating parameters of the HTTP transactions.
 campsiteRouter.route('/')
-.get((req, res, next) => {
-    Campsite.find()
-    .then(campsites => {
+.get((req, res, next) => { //HTTP GET from Express
+    Campsite.find() //Mongoose query, will always returns a promise
+    .then(campsites => { // If there are any dishes in the db, respond with them
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.json(campsites); //send json data to client in response stream and automatically close response stream afterward
@@ -42,6 +46,7 @@ campsiteRouter.route('/')
 });
 
 //endpoints for specific campsite
+//URL parameter => req.params
 campsiteRouter.route('/:campsiteId')
 .get((req, res, next) => {
     Campsite.findById(req.params.campsiteId)
@@ -58,7 +63,7 @@ campsiteRouter.route('/:campsiteId')
 })
 .put((req, res, next) => {
     Campsite.findByIdAndUpdate(req.params.campsiteId, {
-        $set: req.body
+        $set: req.body //$set: is mongo operater for setting value
     },  { new: true })
     .then(campsite => {
         res.statusCode = 200;
