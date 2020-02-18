@@ -40,29 +40,41 @@ app.use(express.json());
 // Parses out req.body when a user goes to a POST route.
 // output => JSON Object
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser()); //parser for cookies
+app.use(cookieParser('12345-67890-09876-54321')); //parser for cookies with secret key 
 
 //Authentication - custom middleware function named auth()
 function auth(req, res, next) {
-    console.log(req.headers);
-    const authHeader = req.headers.authorization;
-    if(!authHeader) {
-        const err = new Error('You are not authenticated!');
-        res.setHeader('WWW-Authenticate', 'Basic'); //lets client know the server is requesting authentication and the authentication method requested is 'Basic'.
-        err.status = 401;
-        return next(err);
-    }
-    //parse authorization header and validate username and password
-    const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-    const user = auth[0];
-    const pass = auth[1];
-    if (user ==='admin' && pass === 'password') {
-      return next(); //authorized
-    } else {
-      const err = new Error('You are not authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
+    //If incoming requests does not include the signedCookies.user property or the signed cookies value itself is parsed as false then client sending request has not been authenticated, so we challenge user to authenticate
+    //.signedCookies provided by cookie-parser .user provided by developer
+    if (!req.signedCookies.user) { 
+        const authHeader = req.headers.authorization;
+        if(!authHeader) {
+            const err = new Error('You are not authenticated!');
+            res.setHeader('WWW-Authenticate', 'Basic'); //lets client know the server is requesting authentication and the authentication method requested is 'Basic'.
+            err.status = 401;
+            return next(err);
+        }
+        //parse authorization header and validate username and password
+        const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+        const user = auth[0];
+        const pass = auth[1];
+        if (user ==='admin' && pass === 'password') {
+            res.cookie('user', 'admin', {signed: true}); //create signed cookie
+            return next(); //authorized
+      } else {
+            const err = new Error('You are not authenticated!');
+            res.setHeader('WWW-Authenticate', 'Basic');
+            err.status = 401;
+            return next(err);
+        }
+    } else { //if there is a signed cookie in the incoming request
+        if (req.signedCookies.user === 'admin') {
+            return next();
+        } else {
+            const err = new Error('You are not authenticated!');
+            err.status = 401;
+            return next(err);
+        }
     }
 
 }
