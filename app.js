@@ -53,36 +53,22 @@ app.use(session({
     store: new FileStore() //create new fileStore object to save session information to server hard disk rather than just in application memory
 }));
 
+// endpoints for HTTP requests that do NOT require authentication
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
 //Authentication - custom middleware function named auth()
 function auth(req, res, next) {
     console.log(req.session);
 
-    //If incoming requests does not include the signedCookies.user property or the signed cookies value itself is parsed as false then client sending request has not been authenticated, so we challenge user to authenticate
-    //.signedCookies provided by cookie-parser .user provided by developer
+    //check if client is authenticated (has session with user field)    
     if (!req.session.user) { 
-        const authHeader = req.headers.authorization;
-        if(!authHeader) {
-            const err = new Error('You are not authenticated!');
-            res.setHeader('WWW-Authenticate', 'Basic'); //lets client know the server is requesting authentication and the authentication method requested is 'Basic'.
-            err.status = 401;
-            return next(err);
-        }
-        //parse authorization header and validate username and password
-        const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-        const user = auth[0];
-        const pass = auth[1];
-        if (user ==='admin' && pass === 'password') {
-            //res.cookie('user', 'admin', {signed: true}); //create signed cookie
-            req.session.user = 'admin'; //save to session that username = 'admin'
-            return next(); //authorized
-      } else {
-            const err = new Error('You are not authenticated!');
-            res.setHeader('WWW-Authenticate', 'Basic');
-            err.status = 401;
-            return next(err);
-        }
-    } else { //if there is a signed cookie in the incoming request
-        if (req.session.user === 'admin') {
+        //no session with user field
+        const err = new Error('You are not authenticated!');
+        err.status = 401;
+        return next(err);
+    } else { //yes, session with user field now check if authenticated
+        if (req.session.user === 'authenticated') {
             return next();
         } else {
             const err = new Error('You are not authenticated!');
@@ -101,9 +87,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 * URLS
 */
 
-// endpoints for HTTP requests
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+// endpoints for HTTP requests that require authentication
 app.use('/campsites', campsiteRouter);
 app.use('/promotions', promotionRouter);
 app.use('/partners', partnerRouter);
