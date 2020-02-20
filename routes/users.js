@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../models/user');
 const passport = require('passport');
+const authenticate = require('../authenticate');
 
 const router = express.Router();
 
@@ -37,10 +38,13 @@ router.post('/signup', (req, res) => {
 // challenging user for credentials, parsing credentials from request body, etc
 // All we need to do is send response to client. Any errors already handled
 // by passport.  Set up response for successful log in.
-router.post('/login', passport.authenticate('local'), (req, res) => { 
+router.post('/login', passport.authenticate('local'), (req, res) => {
+    //user local strategy to authenticate user, but then issue token to user
+    const token = authenticate.getToken({_id: req.user._id});
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
-    res.json({success: true, status: 'You are successfully logged in!'});
+    //add token to response so it will always be carried in the header
+    res.json({success: true, token: token, status: 'You are successfully logged in!'});
 });
 
 //handle user logout - server can stop tracking
