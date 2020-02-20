@@ -46,11 +46,6 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(passport.initialize());
 
-
-// endpoints for HTTP requests that do NOT require authentication
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-
 //Directory for static files
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -58,7 +53,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 * URLS
 */
 
-// endpoints for HTTP requests that require authentication
+// endpoints for HTTP requests 
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
 app.use('/campsites', campsiteRouter);
 app.use('/promotions', promotionRouter);
 app.use('/partners', partnerRouter);
