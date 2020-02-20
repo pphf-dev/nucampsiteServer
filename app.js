@@ -6,6 +6,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session); //require function returns a function as its return value, then we immediately call that return funtion with the second parameter list of (session)
+const passport = require('passport');
+const authenticate = require('./authenticate');
 
 //Current working directory
 var indexRouter = require('./routes/index');
@@ -53,29 +55,29 @@ app.use(session({
     store: new FileStore() //create new fileStore object to save session information to server hard disk rather than just in application memory
 }));
 
+// Only needed for session based authentication. Check incoming requests to see
+// if there is an existing session for that client and if so the session data is
+// loaded into the request as req.user
+app.use(passport.initialize());
+app.use(passport.session());
+
 // endpoints for HTTP requests that do NOT require authentication
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 //Authentication - custom middleware function named auth()
 function auth(req, res, next) {
-    console.log(req.session);
+    console.log(req.user);
 
-    //check if client is authenticated (has session with user field)    
-    if (!req.session.user) { 
-        //no session with user field
+    //check if there is a req.user    
+    if (!req.user) { 
+        //if no, we know there is no session loaded for this client
         const err = new Error('You are not authenticated!');
         err.status = 401;
         return next(err);
-    } else { //yes, session with user field now check if authenticated
-        if (req.session.user === 'authenticated') {
-            return next();
-        } else {
-            const err = new Error('You are not authenticated!');
-            err.status = 401;
-            return next(err);
-        }
-    }
+    } else { // if yes, then pass the client to the next middleware
+        return next();
+    } 
 }
 
 app.use(auth);
