@@ -14,6 +14,7 @@ campsiteRouter.use(bodyParser.json()); //Parsing out JSON object
 campsiteRouter.route('/')
 .get((req, res, next) => { //HTTP GET from Express
     Campsite.find() //Mongoose query, will always returns a promise
+    .populate('comments.author') //populate author field from user document
     .then(campsites => { // If there are any dishes in the db, respond with them
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -50,6 +51,7 @@ campsiteRouter.route('/')
 campsiteRouter.route('/:campsiteId')
 .get((req, res, next) => {
     Campsite.findById(req.params.campsiteId)
+    .populate('comments.author')
     .then(campsite => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -88,6 +90,7 @@ campsiteRouter.route('/:campsiteId')
 campsiteRouter.route('/:campsiteId/comments')
 .get((req, res, next) => {
     Campsite.findById(req.params.campsiteId)
+    .populate('comments.author')
     .then(campsite => {
         if (campsite) {
             res.statusCode = 200;
@@ -105,6 +108,7 @@ campsiteRouter.route('/:campsiteId/comments')
     Campsite.findById(req.params.campsiteId)
     .then(campsite => {
         if (campsite) {
+            req.body.author = req.user._id; //use id of user as author
             campsite.comments.push(req.body); //add comment to array in memory only
             campsite.save() //save to db
             .then(campsite => {
@@ -153,6 +157,7 @@ campsiteRouter.route('/:campsiteId/comments')
 campsiteRouter.route('/:campsiteId/comments/:commentId')
 .get((req, res, next) => {
     Campsite.findById(req.params.campsiteId)
+    .populate('comments.author')
     .then(campsite => { //check campsite and comment values not null
         if (campsite && campsite.comments.id(req.params.commentId)) {
             res.statusCode = 200;
