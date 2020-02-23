@@ -6,8 +6,19 @@ const authenticate = require('../authenticate');
 const router = express.Router();
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, 
+    function(req, res, next) {
+        if (req.user.admin) {
+            User.find() //Mongoose query, will always return a promise
+            .then(users => { // If there are any users in the db, respond with them
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.json(users); //send json data to client in response stream and automatically close response stream afterward
+            })
+            .catch(err => next(err)); //pass off error to overall error handler
+        } else {
+            console.log('Do nothing. Error handled by verifyAdmin()');
+        }
 });
 
 // handle new user sign-up endpoint
@@ -34,8 +45,8 @@ router.post('/signup', (req, res) => {
                         res.json({err: err});
                         return;
                     }
-                    //authenticate method returns a function so we need to call that
-                    //function by setting up a second arguments list here
+                    //authenticate method returns a function so we need to call
+                    //that function by setting up a second arguments list here
                     passport.authenticate('local')(req, res, () => {
                         //response to client
                         res.statusCode = 200;
