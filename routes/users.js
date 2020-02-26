@@ -2,11 +2,12 @@ const express = require('express');
 const User = require('../models/user');
 const passport = require('passport');
 const authenticate = require('../authenticate');
+const cors = require('./cors');
 
 const router = express.Router();
 
 /* GET users listing. */
-router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, 
+router.get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, 
     function(req, res, next) {
         if (req.user.admin) {
             User.find() //Mongoose query, will always return a promise
@@ -22,7 +23,7 @@ router.get('/', authenticate.verifyUser, authenticate.verifyAdmin,
 });
 
 // handle new user sign-up endpoint
-router.post('/signup', (req, res) => {
+router.post('/signup', cors.corsWithOptions, (req, res) => {
     User.register(
         new User({username: req.body.username}),
         req.body.password,
@@ -63,7 +64,7 @@ router.post('/signup', (req, res) => {
 // challenging user for credentials, parsing credentials from request body, etc
 // All we need to do is send response to client. Any errors already handled
 // by passport.  Set up response for successful log in.
-router.post('/login', passport.authenticate('local'), (req, res) => {
+router.post('/login', cors.corsWithOptions, passport.authenticate('local'), (req, res) => {
     //user local strategy to authenticate user, but then issue token to user
     const token = authenticate.getToken({_id: req.user._id});
     res.statusCode = 200;
@@ -73,7 +74,7 @@ router.post('/login', passport.authenticate('local'), (req, res) => {
 });
 
 //handle user logout - server can stop tracking
-router.get('/logout', (req, res, next) => { //user is actually logged in
+router.get('/logout', cors.corsWithOptions, (req, res, next) => { //user is actually logged in
     if (req.session) {
         req.session.destroy(); //delete session file on server side
         res.clearCookie('session-id'); //clear cookie on client
