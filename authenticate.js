@@ -84,4 +84,4 @@ exports.facebookPassport = passport.use(
             })
         }
     )
-)
+);

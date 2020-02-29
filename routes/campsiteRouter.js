@@ -17,7 +17,7 @@ campsiteRouter.route('/')
 .get(cors.cors, (req, res, next) => { //HTTP GET from Express
     Campsite.find() //Mongoose query, will always returns a promise
     .populate('comments.author') //populate author field from user document
-    .then(campsites => { // If there are any dishes in the db, respond with them
+    .then(campsites => { // If there are any campsites in the db, respond with them
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.json(campsites); //send json data to client in response stream and automatically close response stream afterward
